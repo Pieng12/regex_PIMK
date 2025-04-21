@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Password Validation Form</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-tr from-blue-100 to-indigo-100 min-h-screen flex items-center justify-center p-4">
+
+  <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md relative">
+    <h2 class="text-3xl font-bold mb-6 text-center text-gray-800">Validasi Email & Password</h2>
+    <form id="form" novalidate>
+      <div class="mb-5">
+        <label class="block text-gray-700 font-semibold mb-1" for="email">Email</label>
+        <input type="text" id="email" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" required>
+        <p id="emailError" class="text-sm text-red-600 mt-1 hidden">Email tidak valid.</p>
+      </div>
+
+      <div class="mb-6 relative">
+        <label class="block text-gray-700 font-semibold mb-1" for="password">Password</label>
+        <div class="relative">
+          <input type="password" id="password" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 pr-10" required>
+          <button type="button" id="togglePassword" class="absolute right-2 top-2.5 text-gray-500 hover:text-blue-600">
+            👁️
+          </button>
+        </div>
+        <ul id="passwordChecklist" class="mt-2 space-y-1 text-sm text-red-600 hidden">
+          <li id="minChar">• Minimal 8 karakter</li>
+          <li id="upper">• Mengandung huruf besar</li>
+          <li id="lower">• Mengandung huruf kecil</li>
+          <li id="number">• Mengandung angka</li>
+          <li id="symbol">• Mengandung simbol</li>
+          <li id="noSpace">• Tidak boleh ada spasi</li>
+        </ul>
+      </div>
+
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+        Submit
+      </button>
+      <p id="message" class="mt-4 text-center text-sm font-medium"></p>
+    </form>
+  </div>
+
+  <div id="successModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 hidden">
+    <div class="bg-white p-6 rounded-xl shadow-xl max-w-sm w-full text-center">
+      <h3 class="text-xl font-bold text-green-700 mb-2">Validasi Berhasil!</h3>
+      <p class="text-sm text-gray-600 mb-4">Email dan Password valid:</p>
+      <div class="text-left text-sm mb-4">
+        <p><strong>Email:</strong> <span id="modalEmail"></span></p>
+        <p><strong>Password:</strong> <span id="modalPassword"></span></p>
+      </div>
+      <button id="closeModal" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+        Tutup
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const email = document.getElementById("email");
+    const password = document.getElementById("password");
+    const emailError = document.getElementById("emailError");
+    const checklist = {
+      minChar: document.getElementById("minChar"),
+      upper: document.getElementById("upper"),
+      lower: document.getElementById("lower"),
+      number: document.getElementById("number"),
+      symbol: document.getElementById("symbol"),
+      noSpace: document.getElementById("noSpace")
+    };
+    const checklistContainer = document.getElementById("passwordChecklist");
+    const form = document.getElementById("form");
+    const message = document.getElementById("message");
+
+    const modal = document.getElementById("successModal");
+    const modalEmail = document.getElementById("modalEmail");
+    const modalPassword = document.getElementById("modalPassword");
+    const closeModal = document.getElementById("closeModal");
+
+    document.getElementById("togglePassword").addEventListener("click", () => {
+      const type = password.getAttribute("type") === "password" ? "text" : "password";
+      password.setAttribute("type", type);
+    });
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+    function validateEmail() {
+      if (!emailRegex.test(email.value.trim())) {
+        email.classList.add('border-red-500');
+        emailError.classList.remove('hidden');
+        return false;
+      } else {
+        email.classList.remove('border-red-500');
+        emailError.classList.add('hidden');
+        return true;
+      }
+    }
+
+    function updatePasswordChecklist(val) {
+      checklistContainer.classList.remove('hidden');
+      const checks = {
+        minChar: val.length >= 8,
+        upper: /[A-Z]/.test(val),
+        lower: /[a-z]/.test(val),
+        number: /\d/.test(val),
+        symbol: /[^A-Za-z0-9\s]/.test(val),
+        noSpace: !/\s/.test(val)
+      };
+      for (let key in checks) {
+        checklist[key].classList.toggle('hidden', checks[key]);
+      }
+    }
+
+    function isPasswordValid(pwd) {
+      return (
+        pwd.length >= 8 &&
+        /[A-Z]/.test(pwd) &&
+        /[a-z]/.test(pwd) &&
+        /\d/.test(pwd) &&
+        /[^A-Za-z0-9\s]/.test(pwd) &&
+        !/\s/.test(pwd)
+      );
+    }
+
+    email.addEventListener('input', validateEmail);
+    password.addEventListener('focus', () => checklistContainer.classList.remove('hidden'));
+    password.addEventListener('blur', () => checklistContainer.classList.add('hidden'));
+    password.addEventListener('input', () => updatePasswordChecklist(password.value));
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const emailValid = validateEmail();
+      const passwordValid = isPasswordValid(password.value);
+
+      if (emailValid && passwordValid) {
+        modalEmail.textContent = email.value;
+        modalPassword.textContent = password.value;
+        modal.classList.remove("hidden");
+        message.textContent = "";
+      } else {
+        message.textContent = "Periksa kembali input Anda.";
+        message.className = "text-red-600";
+      }
+    });
+
+    closeModal.addEventListener("click", () => modal.classList.add("hidden"));
+    window.addEventListener("click", e => {
+      if (e.target === modal) modal.classList.add("hidden");
+    });
+  </script>
+
+</body>
+</html>
